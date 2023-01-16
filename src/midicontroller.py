@@ -16,7 +16,7 @@
 #  MA 02110-1301, USA.
 
 import pygame
-from message import Message
+from .message import Message
 
 class MidiController:
     def __init__(self):
@@ -30,6 +30,8 @@ class MidiController:
         return True
 
     def Poll(self) -> Message:
+        if not self.midi:
+            return None
         if self.midi.poll():
             raw = self.midi.read(1)
             values = tuple(raw[0][0][0:3])

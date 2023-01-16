@@ -20,57 +20,99 @@ Install python requirements
 python pip install -r requirements.txt
 ```
 
-## Configuration
-
-If you are using a midi controller find the midi bindings via:
-
-```sh
-python src/main.py --midi_test
-```
-
-Assuming you have midi controller the following config works for an M-Audio Oxygenpro Mini with Mouse Yoke active.
-
-```
-MOUSE_X 1 X
-MOUSE_Y 1 Y
-176.1 1 Z
-176.33 1 RX
-176.34 1 RY
-176.35 1 RZ
-176.36 1 SL0
-176.37 1 SL1
-137.40 1 1
-153.40 1 1
-137.41 1 2
-153.41 1 2
-137.42 1 3
-153.42 1 3
-137.43 1 MOUSE_TOGGLE
-137.36 1 5
-153.36 1 5
-137.37 1 6
-153.37 1 6
-137.38 1 7
-153.38 1 7
-137.39 1 8
-153.39 1 8
-control.f12 1 MOUSE_TOGGLE
-```
-
-If you don't have a midi controller you can configure the virtual yoke as follows:
-
-```
-MOUSE_X 1 X
-MOUSE_Y 1 Y
-control.f12 1 MOUSE_TOGGLE
-```
-
 ## Run
 
+If you don't have any midi controllers, you can use the simple
+Mouse Yoke example configuration:
+
 ```sh
-python src/main.py -m 1 -c src/oxygenpro.conf
+python virtualcontroller.py -c mouseyoke.conf
 ```
 
+If you have midi controllers, keep reading.
+
+## Midi Configuration
+
+If you are using a midi controller find the id you need to pass to the
+-m parameter by listing the midi devices:
+
+```sh
+python src/main.py --list_midi
+```
+
+```
+MIDI devices:
+1 Oxygen Pro Mini
+2 MIDIIN2 (Oxygen Pro Mini)
+3 MIDIIN3 (Oxygen Pro Mini)
+4 MIDIIN4 (Oxygen Pro Mini)
+```
+
+Say we want to pick the first with id "1", run:
+
+```sh
+copy mouseyoke.conf midi.conf
+python virtualcontroller.py -c midi.conf -m 1 -v
+```
+
+any any time you press a button on the midi controller you should see a
+warning about unbound messages:
+
+```
+Acquiring vJoystick: 1
+x,y = 1.0, 0.509
+Unbound message: 153.40
+Unbound message: 137.40
+```
+
+You can now add the above button to the midi.conf and bind that button the
+the first button on the second virtual joystick interface. The format
+of the configuration file is:
+
+<INPUT> <VJOY> <OUTPUT>
+
+* INPUT can be any midi message, MOUSE_X, MOUSE_Y or a global hotkey.
+* VJOY should be a number between 1 and the number of virtual joysticks
+     configured.
+* Output can be a number between 1 and 32, X, Y, Z, RX, RY, RZ, SL0, SL1, WHL, POV or
+       MOUSE_TOGGLE
+
+```
+MOUSE_X 1 X
+MOUSE_Y 1 Y
+control.f12 1 MOUSE_TOGGLE
+137.40 2 1
+153.40 2 1
+```
+
+An example configuration is available in oxygenpro.conf
+
+## Mouse Yoke config
+
+The Mouse Yoke has a few configuration parameters:
+
+* --width, screen width in pixels
+* --height, screen height in pixels
+* --center_zone, dead zone in center of screen in percent of min(width,height)
+* --edge_zone, dead zone at edge of screen in percent of min(width, height)
+* --offset_x x offset of the center of the virtual yoke
+* --offset_y y offset of the center of the virtual yoke
+
+## Global Hotkeys
+
+If you need to toggle the mouse yoke on and off via the keyboard you can
+use global hotkeys to do this. The list of key you can use
+are available here:
+
+https://pypi.org/project/global-hotkeys/
+
+for example:
+
+```
+control.f12 1 MOUSE_TOGGLE
+```
+
+note: MOUSE_TOGGLE ignores the vjoy parameter, but pick an existing vjoy interface.
 
 ## Inspiration
 

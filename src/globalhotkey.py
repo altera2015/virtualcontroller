@@ -16,9 +16,10 @@
 #  MA 02110-1301, USA.
 
 import global_hotkeys
-from config import Config, Binding
-from message import Message
 from threading import Lock
+
+from .config import Config, Binding
+from .message import Message
 
 class GlobalHotkeyBinding:
 
@@ -42,7 +43,6 @@ class GlobalHotkeys:
         for binding in config.bindings:
             if Binding.HotkeyInputs.match(binding) and not Binding.MidiInputs.match(binding):
                 keys = binding.lower().split(".")
-                print(keys)
                 self.bindings.append( [keys, GlobalHotkeyBinding(self, binding).TriggerDown, GlobalHotkeyBinding(self, binding).TriggerUp] )
         if len(self.bindings)>0:
             global_hotkeys.register_hotkeys(self.bindings)

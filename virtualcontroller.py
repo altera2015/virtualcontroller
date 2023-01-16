@@ -18,8 +18,8 @@
 import argparse
 import pyautogui
 
-from config import Config
-from virtualcontroller import VirtualController
+from src.config import Config
+from src.virtualcontroller import VirtualController
 
 def main():
     size = pyautogui.size()
@@ -29,32 +29,31 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", "-c", help="config file to load")
     parser.add_argument("--midi", "-m", type=int, help="Midi device to use")
-    parser.add_argument("--midi_test", action="store_true", default=False, help="test midi input")
+    parser.add_argument("--list_midi", action="store_true", default=False, help="List Midi devices")
 
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose")
     parser.add_argument("--frequency", type=int, required=False, default=30, choices=range(10,121), metavar="[10-120]", help="poll frequency")
 
     parser.add_argument("--center_zone", help="Percent of screen around center of screen that keeps yoke at 0,0", default=10, choices=range(0,101), metavar="[0-100]", type=int)
     parser.add_argument("--edge_zone", help="Percent of screen around center of screen that keeps yoke at 100", default=10, choices=range(0,101), metavar="[0-100]", type=int)
+
     parser.add_argument("--width", type=int, default=width, help="screen width")
     parser.add_argument("--height", type=int, default=height, help="screen height")
+    parser.add_argument("--offset_x", type=int, default=0, help="mouse x offset in pixels")
+    parser.add_argument("--offset_y", type=int, default=0, help="mouse y offset in pixels")
 
 
     options = parser.parse_args()
 
-    if options.midi_test:
-        return VirtualController.MidiTest()
+    if options.list_midi:
+        return VirtualController.ListMidiDevices()
 
     if not options.config:
         print("You must specify a config")
         return -1
 
-    if not options.midi:
-        print("Must specify midi controller id")
-        return -1
-
     config = Config()
-    if not config.Load(options.config):
+    if not config.Load(options):
         print("Failed to load config")
         return -1
 

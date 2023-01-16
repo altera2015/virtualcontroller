@@ -30,6 +30,15 @@ class Binding:
         self.vjoy = vjoy
         self.output = output
 
+    def IsMidi(self):
+        return Binding.MidiInputs.match(self.input) is not None
+
+    def IsHotKey(self):
+        return self.input in Binding.MouseInputs
+
+    def IsMouse(self):
+        return Binding.HotkeyInputs.match(self.input) is not None
+
     def Validate(self) -> bool:
         if not (self.output in Config.Axis or self.output in Config.Buttons or self.output in Config.MouseOutputs):
             print("Invalid output specified {}".format(self.output))
@@ -43,7 +52,7 @@ class Binding:
             print("Invalid VJoy index {}".format(self.vjoy))
             return False
 
-        if not (Binding.MidiInputs.match(self.input) or self.input in Binding.MouseInputs or Binding.HotkeyInputs.match(self.input)):
+        if not (self.IsMidi() or self.IsHotKey() or self.IsMouse() ):
             print("Unrecognized input binding {}".format(self.input))
             return False
 
@@ -66,10 +75,12 @@ class Config:
         self.bindings = {}
         self.vjoys = []
 
-    def Load(self, config) -> bool:
-        with open(config, "r") as f:
+    def Load(self, options) -> bool:
+        with open(options.config, "r") as f:
             lines = f.readlines()
             for line in lines:
+                if line.startswith("#"):
+                    continue
                 values = line.split(" ")
                 if len(values)==3:
                     input = values[0].upper()
@@ -79,6 +90,9 @@ class Config:
                     binding = Binding(input, vjoy, output)
                     if not binding.Validate():
                         continue
+
+                    if not options.midi and binding.IsMidi():
+                        print("Warning midi binding found without midi controller enabled: {}".format(binding.input))
 
                     self.bindings[values[0].upper()] = binding
 
