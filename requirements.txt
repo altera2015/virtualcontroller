@@ -1,0 +1,4 @@
+pygame
+pyautogui
+pywin32
+global-hotkeys
