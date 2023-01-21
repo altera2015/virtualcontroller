@@ -34,7 +34,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose")
     parser.add_argument("--frequency", type=int, required=False, default=30, choices=range(10,121), metavar="[10-120]", help="poll frequency")
 
-    parser.add_argument("--center_zone", help="Percent of screen around center of screen that keeps yoke at 0,0", default=10, choices=range(0,101), metavar="[0-100]", type=int)
+    parser.add_argument("--exponent", help="controller slope (1=linear, 2+soft)", default=2, choices=range(1,5), metavar="[1-5]", type=float)
     parser.add_argument("--edge_zone", help="Percent of screen around center of screen that keeps yoke at 100", default=10, choices=range(0,101), metavar="[0-100]", type=int)
 
     parser.add_argument("--width", type=int, default=width, help="screen width")

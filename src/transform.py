@@ -32,26 +32,21 @@ class Transform:
     def _clamp(n:float, minn:float, maxn:float) -> float:
         return max(min(maxn, n), minn)
 
-    def __init__(self, center_zone:float, edge_zone: float):
-        center_zone /= 100
+    def __init__(self, edge_zone: float, exponent: float):
         edge_zone /= 100
-        if (center_zone + edge_zone >= 0.5):
-            print("center_zone + edge_zone cannot be more than 0.5 center={}, edge={}".format(center_zone, edge_zone))
-            center_zone = 0.1
+        if (edge_zone >= 0.5):
+            print("edge_zone cannot be more than 0.5 edge={}".format(edge_zone))
             edge_zone = 0.1
-
-        center_zone /= 2.0
-        self.center_zone = center_zone
         self.edge_zone = edge_zone
-        self.slope = 0.5 / (0.5 - edge_zone  - center_zone )
-        self.b = - self.slope * center_zone
+        self.exponent = exponent
 
     # x = -0.5 .. 0.5
     # y = -0.5 .. 0.5
     def Process(self, x : float, y: float):
         r, theta = Transform._polar(x,y)
-        r = Transform._clamp(r, 0, 0.5 - self.edge_zone)
-        if abs(r) < self.center_zone:
-            return 0.0, 0.0
-        else:
-            return Transform._rect(r * self.slope + self.b, theta)
+        range = 0.5 - self.edge_zone
+        r /= range
+        x, y = Transform._rect(range * (r ** self.exponent), theta)
+        x = Transform._clamp(x, -0.5, 0.5)
+        y = Transform._clamp(y, -0.5, 0.5)
+        return x,y

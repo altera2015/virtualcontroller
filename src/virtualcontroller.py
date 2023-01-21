@@ -55,7 +55,7 @@ class VirtualController:
             assert(self.vjoy.GetVJDStatus(vid) == 0)
             self.vjoy.ResetVJD(vid)
 
-        self.transform = Transform(options.center_zone, options.edge_zone)
+        self.transform = Transform(options.edge_zone, options.exponent)
         self.midi = MidiController()
 
         self.hotkeys = GlobalHotkeys(config)
