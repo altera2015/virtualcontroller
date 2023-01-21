@@ -28,6 +28,8 @@ from .midicontroller import MidiController
 from .config import Binding, Config
 from .globalhotkey import GlobalHotkeys
 from .message import Message
+from .vector import Vector
+
 
 class VirtualController:
     def __init__(self, config: Config, options):
@@ -36,10 +38,16 @@ class VirtualController:
         self.mouse_x_action = self.config.GetBinding("MOUSE_X")
         self.mouse_y_action = self.config.GetBinding("MOUSE_Y")
         self.mouse_enabled = self.mouse_x_action or self.mouse_y_action
-        self.mouse_axis_x = 0.5
-        self.mouse_axis_y = 0.5
-        self.last_mouse_axis_x = 0.0
-        self.last_mouse_axis_y = 0.0
+        self.mouse_axis = [ 0.5, 0.5]
+        self.last_mouse_axis = [ 0.0, 0.0 ]
+        self.mouse = [0,0]
+
+        self.mouse_actual = [0.0,0.0]
+        self.mouse_offset = [0.0,0.0]
+        self.mouse_disable_start = [0.0,0.0]
+
+        self.screen_center = [options.width/2, options.height/2]
+        self.offset = [self.options.offset_x, self.options.offset_y]
 
         vjoyregkey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{8E31F76F-74C3-47F1-9550-E041EEDC5FBB}_is1')
         installpath = winreg.QueryValueEx(vjoyregkey, 'InstallLocation')
@@ -62,12 +70,14 @@ class VirtualController:
 
         self.handlers = {
             "MOUSE_TOGGLE" : self._MouseToggle,
+            "MOUSE_RECENTER": self._MouseRecenter,
         }
 
         for axis in Config.Axis:
             self.handlers[axis] = self._AxisMove
         for button in Config.Buttons:
             self.handlers[button] = self._ButtonPress
+
 
     def _ButtonPress(self, binding: Binding, value: int):
         self.vjoy.SetBtn(value, binding.vjoy, int(binding.output))
@@ -76,10 +86,22 @@ class VirtualController:
         value = (value + 1) << 8
         self.vjoy.SetAxis(value, binding.vjoy, Config.Axis[binding.output])
 
+    def _MouseRecenter(self, binding: Binding, value: int):
+        if value != 0:
+            return
+        self.mouse_offset[0] = 0.0
+        self.mouse_offset[1] = 0.0
+        pass
+
     def _MouseToggle(self, binding: Binding, value: int):
         if value != 0:
             return
         self.mouse_enabled = not self.mouse_enabled
+        if not self.mouse_enabled:
+            self.mouse_disable_start = Vector.Add( self.mouse, self.mouse_offset )
+        else:
+            self.mouse_offset = Vector.Sub(self.mouse_disable_start, self.mouse)
+
         if self.options.verbose:
             if self.mouse_enabled:
                 print("Yoke Enabled")
@@ -91,26 +113,26 @@ class VirtualController:
         if not (self.mouse_x_action or self.mouse_y_action):
             return False
 
-        if self.mouse_enabled:
-            scaling = min(self.options.width, self.options.height)
-            x, y = pyautogui.position()
-            x += self.options.offset_x
-            y += self.options.offset_y
+        scaling = min(self.options.width, self.options.height)
+        self.mouse[0], self.mouse[1] = pyautogui.position()
+        Vector.AddInPlace(self.mouse, self.offset)
 
-            self.mouse_axis_x = ( x - self.options.width / 2 ) / scaling
-            self.mouse_axis_y = ( y - self.options.height / 2) / scaling
-            self.mouse_axis_x, self.mouse_axis_y = self.transform.Process(self.mouse_axis_x, self.mouse_axis_y)
-            self.mouse_axis_x += 0.5
-            self.mouse_axis_y = 0.5 - self.mouse_axis_y
+        if self.mouse_enabled:
+            mouse = Vector.Add(self.mouse, self.mouse_offset)
+            Vector.SubInPlace(mouse, self.screen_center)
+            Vector.MultInPlace(mouse, 1/scaling)
+            mouse[0], mouse[1] = self.transform.Process(mouse[0], mouse[1])
+            mouse[0] += 0.5
+            mouse[1] = 0.5 - mouse[1]
+            Vector.Set(self.mouse_axis, mouse)
 
         if self.options.verbose:
-            if (self.last_mouse_axis_x - self.mouse_axis_x)**2 + (self.last_mouse_axis_y - self.mouse_axis_y) ** 2 > 0.01:
-                print("x,y = {}, {}".format(round(self.mouse_axis_x, 3), round(self.mouse_axis_y,3)))
-                self.last_mouse_axis_x = self.mouse_axis_x
-                self.last_mouse_axis_y = self.mouse_axis_y
+            if Vector.LenSquare(self.mouse_axis, self.last_mouse_axis) > 0.01:
+                print("x,y = {}, {}".format(round(self.mouse_axis[0], 3), round(self.mouse_axis[1],3)))
+                Vector.Set(self.last_mouse_axis, self.mouse_axis)
 
-        self.vjoy.SetAxis( int(self.mouse_axis_x*JOYSTICK_RANGE), self.mouse_x_action.vjoy, Config.Axis[self.mouse_x_action.output])
-        self.vjoy.SetAxis( int(self.mouse_axis_y*JOYSTICK_RANGE), self.mouse_y_action.vjoy, Config.Axis[self.mouse_y_action.output])
+        self.vjoy.SetAxis( int(self.mouse_axis[0]*JOYSTICK_RANGE), self.mouse_x_action.vjoy, Config.Axis[self.mouse_x_action.output])
+        self.vjoy.SetAxis( int(self.mouse_axis[1]*JOYSTICK_RANGE), self.mouse_y_action.vjoy, Config.Axis[self.mouse_y_action.output])
         return True
 
     def _ProcessHotkeys(self) -> bool:

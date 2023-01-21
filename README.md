@@ -74,13 +74,14 @@ of the configuration file is:
 * INPUT can be any midi message, MOUSE_X, MOUSE_Y or a global hotkey.
 * VJOY should be a number between 1 and the number of virtual joysticks
      configured.
-* Output can be a number between 1 and 32, X, Y, Z, RX, RY, RZ, SL0, SL1, WHL, POV or
-       MOUSE_TOGGLE
+* Output can be a number between 1 and 32, X, Y, Z, RX, RY, RZ, SL0, SL1, WHL,
+  POV, MOUSE_RECENTER or MOUSE_TOGGLE
 
 ```
 MOUSE_X 1 X
 MOUSE_Y 1 Y
 control.f12 1 MOUSE_TOGGLE
+control.f11 1 MOUSE_RECENTER
 137.40 2 1
 153.40 2 1
 ```
@@ -93,7 +94,6 @@ The Mouse Yoke has a few configuration parameters:
 
 * --width, screen width in pixels
 * --height, screen height in pixels
-* --center_zone, dead zone in center of screen in percent of min(width,height)
 * --edge_zone, dead zone at edge of screen in percent of min(width, height)
 * --offset_x x offset of the center of the virtual yoke
 * --offset_y y offset of the center of the virtual yoke
@@ -112,7 +112,8 @@ for example:
 control.f12 1 MOUSE_TOGGLE
 ```
 
-note: MOUSE_TOGGLE ignores the vjoy parameter, but pick an existing vjoy interface.
+note: MOUSE_TOGGLE and MOUSE_RECENTER ignore the vjoy parameter, but pick
+an existing vjoy interface.
 
 ## Inspiration
 

@@ -69,7 +69,7 @@ class Config:
                 '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
                 '31', '32']
 
-    MouseOutputs = ["MOUSE_TOGGLE"]
+    MouseOutputs = ["MOUSE_TOGGLE", "MOUSE_RECENTER"]
 
     def __init__(self):
         self.bindings = {}
